@@ -1,0 +1,703 @@
+file:///data/user/0/com.foxdebug.acodefree/files/public/Index.html<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars RPG - Ficha de Personagem (Edição Saga)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0d1117; color: #e6edf3; font-family: system-ui, -apple-system, sans-serif; }
+        .sw-input { background: rgba(22, 27, 34, 0.8); border: 1px solid #30363d; color: #58a6ff; border-radius: 4px; padding: 4px 8px; width: 100%; text-align: center; }
+        .sw-input:focus { border-color: #1f6feb; outline: none; }
+        .sw-label { font-size: 0.65rem; text-transform: uppercase; color: #8b949e; font-weight: bold; letter-spacing: 0.05em; display: block; margin-bottom: 2px; text-align: center; }
+        .sw-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px; }
+        .dark-side-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #30363d; background: #21262d; color: #8b949e; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .dark-side-btn.active { background: #da3633; border-color: #f85149; color: #white; }
+        .condition-box { border: 1px solid #30363d; border-radius: 6px; padding: 6px; text-align: center; cursor: pointer; background: #161b22; transition: all 0.2s; font-size: 0.7rem; }
+        .condition-box.active { border-color: #f85149; background: rgba(218, 54, 51, 0.15); color: #f85149; font-weight: bold; }
+    </style>
+</head>
+<body class="p-2 md:p-6 max-w-7xl mx-auto">
+
+    <!-- BARRA DE CONTROLE / NAVEGAÇÃO -->
+    <div class="flex flex-wrap justify-between items-center bg-[#161b22] border border-[#30363d] p-3 rounded-lg mb-4 gap-2">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-yellow-500 uppercase tracking-wider">🌟 Star Wars RPG (Saga)</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="salvarFicha()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded font-semibold transition cursor-pointer">💾 Salvar Alterações</button>
+            <button onclick="exportarJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded font-semibold transition cursor-pointer">📥 Exportar JSON</button>
+            <label class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1.5 rounded font-semibold transition cursor-pointer">
+                📂 Importar JSON <input type="file" id="importFile" accept=".json" class="hidden" onchange="importarJSON(event)">
+            </label>
+            <button onclick="limparFicha()" class="bg-red-600/80 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded font-semibold transition cursor-pointer">🗑️ Limpar Ficha</button>
+        </div>
+    </div>
+
+    <!-- PÁGINA 1 -->
+    <div class="space-y-4">
+        <!-- CABEÇALHO -->
+        <div class="sw-box grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
+            <div><span class="sw-label">Nome</span><input type="text" id="c_nome" class="sw-input text-left"></div>
+            <div><span class="sw-label">Jogador</span><input type="text" id="c_jogador" class="sw-input text-left"></div>
+            <div><span class="sw-label">Classe</span><input type="text" id="c_classe" class="sw-input text-left"></div>
+            <div><span class="sw-label">Espécie</span><input type="text" id="c_especie" class="sw-input text-left"></div>
+            <div><span class="sw-label">Nível</span><input type="number" id="c_nivel" class="sw-input" value="1" oninput="recalcularTudo()"></div>
+            <div><span class="sw-label">Idade</span><input type="text" id="c_idade" class="sw-input"></div>
+            <div><span class="sw-label">Sexo</span><input type="text" id="c_sexo" class="sw-input"></div>
+            <div><span class="sw-label">Peso / Altura</span><input type="text" id="c_peso" class="sw-input"></div>
+        </div>
+
+        <!-- CORPO PRINCIPAL PÁGINA 1 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- COLUNA ESQUERDA: ATRIBUTOS & DEFESAS -->
+            <div class="lg:col-span-4 space-y-4">
+                <!-- ATRIBUTOS -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500 mb-1">Atributos</h3>
+                    <!-- Cabeçalho Valor / Modificador -->
+                    <div class="grid grid-cols-3 text-[10px] text-gray-400 font-bold text-center px-1">
+                        <span class="text-left">Atributo</span>
+                        <span>Valor</span>
+                        <span>Mod</span>
+                    </div>
+                    <!-- Força -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">FORÇA</span>
+                        <input type="number" id="attr_for" class="sw-input" value="10" oninput="atualizarAtributo('for')">
+                        <input type="text" id="mod_for" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('for')">
+                    </div>
+                    <!-- Destreza -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">DESTREZA</span>
+                        <input type="number" id="attr_des" class="sw-input" value="10" oninput="atualizarAtributo('des')">
+                        <input type="text" id="mod_des" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('des')">
+                    </div>
+                    <!-- Constituição -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">CONSTITUIÇÃO</span>
+                        <input type="number" id="attr_con" class="sw-input" value="10" oninput="atualizarAtributo('con')">
+                        <input type="text" id="mod_con" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('con')">
+                    </div>
+                    <!-- Inteligência -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">INTELIGÊNCIA</span>
+                        <input type="number" id="attr_int" class="sw-input" value="10" oninput="atualizarAtributo('int')">
+                        <input type="text" id="mod_int" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('int')">
+                    </div>
+                    <!-- Sabedoria -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">SABEDORIA</span>
+                        <input type="number" id="attr_sab" class="sw-input" value="10" oninput="atualizarAtributo('sab')">
+                        <input type="text" id="mod_sab" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('sab')">
+                    </div>
+                    <!-- Carisma -->
+                    <div class="grid grid-cols-3 gap-1 items-center">
+                        <span class="text-xs font-bold">CARISMA</span>
+                        <input type="number" id="attr_car" class="sw-input" value="10" oninput="atualizarAtributo('car')">
+                        <input type="text" id="mod_car" class="sw-input bg-gray-900 font-bold" value="+0" oninput="marcarModManual('car')">
+                    </div>
+                </div>
+
+                <!-- DEFESAS -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500 mb-1">Defesas</h3>
+                    <div class="grid grid-cols-6 text-[10px] text-center font-bold text-gray-400">
+                        <span>Def.</span><span>Total</span><span></span><span>Nível/Arm.</span><span>Classe</span><span>Mod</span>
+                    </div>
+                    <!-- FORT -->
+                    <div class="grid grid-cols-6 gap-1 items-center text-xs">
+                        <span class="font-bold">FORT</span>
+                        <input type="text" id="def_fort_tot" class="sw-input bg-gray-900 font-bold" readonly value="10">
+                        <span class="text-center">= 10 +</span>
+                        <input type="number" id="def_fort_arm" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="number" id="def_fort_cls" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="text" id="def_fort_mod" class="sw-input bg-gray-900" readonly value="CON">
+                    </div>
+                    <!-- REF -->
+                    <div class="grid grid-cols-6 gap-1 items-center text-xs">
+                        <span class="font-bold">REF</span>
+                        <input type="text" id="def_ref_tot" class="sw-input bg-gray-900 font-bold" readonly value="10">
+                        <span class="text-center">= 10 +</span>
+                        <input type="number" id="def_ref_arm" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="number" id="def_ref_cls" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="text" id="def_ref_mod" class="sw-input bg-gray-900" readonly value="DES">
+                    </div>
+                    <!-- VON -->
+                    <div class="grid grid-cols-6 gap-1 items-center text-xs">
+                        <span class="font-bold">VON</span>
+                        <input type="text" id="def_von_tot" class="sw-input bg-gray-900 font-bold" readonly value="10">
+                        <span class="text-center">= 10 +</span>
+                        <input type="number" id="def_von_arm" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="number" id="def_von_cls" class="sw-input" value="0" oninput="recalcularDefesas()">
+                        <input type="text" id="def_von_mod" class="sw-input bg-gray-900" readonly value="SAB">
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA CENTRAL: HP, COMBATE E ARMAS -->
+            <div class="lg:col-span-8 space-y-4">
+                <!-- PONTOS DE VIDA E STATUS RÁPIDOS -->
+                <div class="sw-box grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
+                    <div class="col-span-2 bg-[#21262d] p-2 rounded border border-[#30363d]">
+                        <span class="sw-label">Hp total / restante</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input type="number" id="hp_total" class="sw-input font-bold text-lg" placeholder="Total" value="20">
+                            <span class="text-gray-400 font-bold">/</span>
+                            <input type="number" id="hp_restante" class="sw-input font-bold text-lg" placeholder="Restante" value="20">
+                        </div>
+                    </div>
+                    <div>
+                        <span class="sw-label">Velocidade</span>
+                        <input type="text" id="status_vel" class="sw-input" value="6m">
+                    </div>
+                    <div>
+                        <span class="sw-label">Iniciativa</span>
+                        <input type="text" id="status_inic" class="sw-input" value="+0">
+                    </div>
+                    <div>
+                        <span class="sw-label">Percepção</span>
+                        <input type="text" id="status_percep" class="sw-input" value="+0">
+                    </div>
+                    <div>
+                        <span class="sw-label">Ataque Base</span>
+                        <input type="text" id="status_atq_base" class="sw-input" value="+0">
+                    </div>
+                    <div>
+                        <span class="sw-label">Pts de Força</span>
+                        <input type="number" id="status_pts_forca" class="sw-input" value="1">
+                    </div>
+                    <div>
+                        <span class="sw-label">Pts de Destino</span>
+                        <input type="number" id="status_pts_destino" class="sw-input" value="1">
+                    </div>
+                </div>
+
+                <!-- TRILHA DE CONDIÇÃO -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Trilha de Condição</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+                        <div class="condition-box active" onclick="setCondicao(0)" id="cond_0">NORMAL</div>
+                        <div class="condition-box" onclick="setCondicao(-1)" id="cond_1">-1<br><span class="text-[9px]">Geral</span></div>
+                        <div class="condition-box" onclick="setCondicao(-2)" id="cond_2">-2<br><span class="text-[9px]">Geral</span></div>
+                        <div class="condition-box" onclick="setCondicao(-5)" id="cond_3">-5<br><span class="text-[9px]">Geral</span></div>
+                        <div class="condition-box" onclick="setCondicao(-10)" id="cond_4">-10<br><span class="text-[9px]">Metade Mov.</span></div>
+                        <div class="condition-box" onclick="setCondicao('incapaz')" id="cond_5">INCAPAZ<br><span class="text-[9px]">Inconsciente</span></div>
+                    </div>
+                </div>
+
+                <!-- ARMAS -->
+                <div class="sw-box space-y-3">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Armas</h3>
+                    <div id="armas-container" class="space-y-3">
+                        <!-- Gerado via JS ou fixo -->
+                    </div>
+                    <button onclick="adicionarArma()" class="w-full bg-[#21262d] hover:bg-[#30363d] text-xs font-semibold py-1.5 rounded border border-[#30363d] transition cursor-pointer">+ Adicionar Arma</button>
+                </div>
+
+                <!-- LADO NEGRO -->
+                <div class="sw-box space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold uppercase text-yellow-500">Lado Negro</h3>
+                        <span class="text-[10px] text-gray-400">Clique para marcar o progresso (1 a 24)</span>
+                    </div>
+                    <div id="dark-side-grid" class="grid grid-cols-12 sm:grid-cols-24 gap-1 justify-items-center"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PÁGINA 2 -->
+    <div class="mt-6 space-y-4 pt-6 border-t border-[#30363d]">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-yellow-500 mb-2">Página 2: Equipamentos, Perícias & Talentos</h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- ESQUERDA P2: EQUIPAMENTOS, IDIOMAS, APTIDÕES, PODERES -->
+            <div class="lg:col-span-5 space-y-4">
+                <!-- EQUIPAMENTO -->
+                <div class="sw-box space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold uppercase text-yellow-500">Equipamento</h3>
+                        <div class="flex items-center gap-1 text-xs">
+                            <span class="text-gray-400">Créditos:</span>
+                            <input type="text" id="p2_creditos" class="sw-input w-24 text-right" value="0">
+                        </div>
+                    </div>
+                    <textarea id="p2_equipamentos" rows="8" class="sw-input text-left h-36 resize-y" placeholder="Liste seus equipamentos aqui..."></textarea>
+                </div>
+
+                <!-- IDIOMAS -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Idiomas</h3>
+                    <textarea id="p2_idiomas" rows="3" class="sw-input text-left h-20 resize-y" placeholder="Básico, Bith, Huttese..."></textarea>
+                </div>
+
+                <!-- APTIDÕES -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Aptidões</h3>
+                    <textarea id="p2_aptidoes" rows="3" class="sw-input text-left h-20 resize-y" placeholder="Habilidades de classe, talentos raciais..."></textarea>
+                </div>
+
+                <!-- PODERES DA FORÇA -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Poderes da Força</h3>
+                    <textarea id="p2_poderes" rows="4" class="sw-input text-left h-24 resize-y" placeholder="Mover Objeto, Empurrão da Força..."></textarea>
+                </div>
+            </div>
+
+            <!-- DIREITA P2: PERÍCIAS E TALENTOS -->
+            <div class="lg:col-span-7 space-y-4">
+                <!-- PERÍCIAS -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Perícias</h3>
+                    <div class="grid grid-cols-7 text-[9px] font-bold text-gray-400 text-center">
+                        <span class="text-left">Perícia</span>
+                        <span>Bônus</span>
+                        <span>1/2 Nível</span>
+                        <span>Mod</span>
+                        <span>Trein.</span>
+                        <span>Foco</span>
+                        <span>Outros</span>
+                    </div>
+                    <div id="pericias-container" class="space-y-1"></div>
+                </div>
+
+                <!-- TALENTOS -->
+                <div class="sw-box space-y-2">
+                    <h3 class="text-xs font-bold uppercase text-yellow-500">Talentos</h3>
+                    <div id="talentos-container" class="space-y-2"></div>
+                    <button onclick="adicionarTalento()" class="w-full bg-[#21262d] hover:bg-[#30363d] text-xs font-semibold py-1.5 rounded border border-[#30363d] transition cursor-pointer">+ Adicionar Talento</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS DA APLICAÇÃO -->
+    <script>
+        const listaPericias = [
+            { nome: "Acrobacia", mod: "des" },
+            { nome: "Conhecimento (1)", mod: "int" },
+            { nome: "Conhecimento (2)", mod: "int" },
+            { nome: "Dissimulação", mod: "car" },
+            { nome: "Escalar", mod: "for" },
+            { nome: "Furtividade", mod: "des" },
+            { nome: "Iniciativa", mod: "des" },
+            { nome: "Mecânica", mod: "int" },
+            { nome: "Montar", mod: "des" },
+            { nome: "Nadar", mod: "for" },
+            { nome: "Obter Informação", mod: "car" },
+            { nome: "Percepção", mod: "sab" },
+            { nome: "Persuasão", mod: "car" },
+            { nome: "Pilotar", mod: "des" },
+            { nome: "Resistência", mod: "con" },
+            { nome: "Saltar", mod: "for" },
+            { nome: "Sobrevivência", mod: "sab" },
+            { nome: "Tratar Ferimentos", mod: "sab" },
+            { nome: "Usar a Força", mod: "car" },
+            { nome: "Usar Computadores", mod: "int" }
+        ];
+
+        let modsManuais = { for: false, des: false, con: false, int: false, sab: false, car: false };
+        let condicaoAtual = 0;
+        let armasData = [{ arma: "", ataque: "", dano: "", critico: "", tipo: "", notas: "" }];
+        let talentosData = [{ nome: "", pg: "" }, { nome: "", pg: "" }, { nome: "", pg: "" }];
+
+        function formatMod(val) {
+            return val >= 0 ? "+" + val : "" + val;
+        }
+
+        function atualizarAtributo(attr) {
+            const val = parseInt(document.getElementById(`attr_${attr}`).value) || 10;
+            if (!modsManuais[attr]) {
+                const mod = Math.floor((val - 10) / 2);
+                document.getElementById(`mod_${attr}`).value = formatMod(mod);
+            }
+            recalcularTudo();
+        }
+
+        function marcarModManual(attr) {
+            modsManuais[attr] = true;
+            recalcularTudo();
+        }
+
+        function recalcularTudo() {
+            recalcularModsGerais();
+            recalcularDefesas();
+            recalcularPericias();
+        }
+
+        function recalcularModsGerais() {
+            ['for', 'des', 'con', 'int', 'sab', 'car'].forEach(attr => {
+                if (modsManuais[attr]) {
+                    // Mantém o mod digitado manualmente mas atualiza as dependências
+                }
+            });
+        }
+
+        function getModVal(attr) {
+            const val = document.getElementById(`mod_${attr}`).value;
+            return parseInt(val) || 0;
+        }
+
+        function recalcularDefesas() {
+            const nivel = parseInt(document.getElementById('c_nivel').value) || 1;
+            const metadeNivel = Math.floor(nivel / 2);
+
+            const fortArm = parseInt(document.getElementById('def_fort_arm').value) || 0;
+            const fortCls = parseInt(document.getElementById('def_fort_cls').value) || 0;
+            const modCon = getModVal('con');
+            document.getElementById('def_fort_tot').value = 10 + fortArm + fortCls + modCon + metadeNivel;
+
+            const refArm = parseInt(document.getElementById('def_ref_arm').value) || 0;
+            const refCls = parseInt(document.getElementById('def_ref_cls').value) || 0;
+            const modDes = getModVal('des');
+            document.getElementById('def_ref_tot').value = 10 + refArm + refCls + modDes + metadeNivel;
+
+            const vonArm = parseInt(document.getElementById('def_von_arm').value) || 0;
+            const vonCls = parseInt(document.getElementById('def_von_cls').value) || 0;
+            const modSab = getModVal('sab');
+            document.getElementById('def_von_tot').value = 10 + vonArm + vonCls + modSab + metadeNivel;
+        }
+
+        function renderizarPericias() {
+            const container = document.getElementById('pericias-container');
+            container.innerHTML = '';
+            const nivel = parseInt(document.getElementById('c_nivel').value) || 1;
+            const metadeNivel = Math.floor(nivel / 2);
+
+            listaPericias.forEach((p, idx) => {
+                const modHabilidade = getModVal(p.mod);
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-7 gap-1 items-center text-xs";
+                row.innerHTML = `
+                    <span class="truncate font-semibold text-[11px]" title="${p.nome}">${p.nome}</span>
+                    <input type="text" id="per_tot_${idx}" class="sw-input bg-gray-900 font-bold" readonly value="+0">
+                    <input type="text" class="sw-input bg-gray-900 text-center" readonly value="${metadeNivel}">
+                    <input type="text" class="sw-input bg-gray-900 text-center" readonly value="${formatMod(modHabilidade)}">
+                    <input type="checkbox" id="per_trein_${idx}" class="mx-auto accent-blue-600 h-4 w-4" onchange="recalcularPericias()">
+                    <input type="checkbox" id="per_foco_${idx}" class="mx-auto accent-blue-600 h-4 w-4" onchange="recalcularPericias()">
+                    <input type="number" id="per_outros_${idx}" class="sw-input" value="0" oninput="recalcularPericias()">
+                `;
+                container.appendChild(row);
+            });
+            recalcularPericias();
+        }
+
+        function recalcularPericias() {
+            const nivel = parseInt(document.getElementById('c_nivel').value) || 1;
+            const metadeNivel = Math.floor(nivel / 2);
+
+            listaPericias.forEach((p, idx) => {
+                const modHabilidade = getModVal(p.mod);
+                const treinado = document.getElementById(`per_trein_${idx}`)?.checked ? 5 : 0;
+                const foco = document.getElementById(`per_foco_${idx}`)?.checked ? 2 : 0;
+                const outros = parseInt(document.getElementById(`per_outros_${idx}`)?.value) || 0;
+
+                const total = metadeNivel + modHabilidade + treinado + foco + outros;
+                const elTotal = document.getElementById(`per_tot_${idx}`);
+                if (elTotal) elTotal.value = formatMod(total);
+            });
+            recalcularDefesas();
+        }
+
+        function renderizarArmas() {
+            const container = document.getElementById('armas-container');
+            container.innerHTML = '';
+            armasData.forEach((a, idx) => {
+                const div = document.createElement('div');
+                div.className = "p-2 bg-[#21262d] rounded border border-[#30363d] space-y-2 relative";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-gray-400 font-bold">Arma ${idx + 1}</span>
+                        ${armasData.length > 1 ? `<button onclick="removerArma(${idx})" class="text-red-400 hover:text-red-300 text-xs font-bold cursor-pointer">✕ Remover</button>` : ''}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div><span class="sw-label">Arma</span><input type="text" id="arma_nome_${idx}" class="sw-input text-left" value="${a.arma}"></div>
+                        <div><span class="sw-label">Ataque</span><input type="text" id="arma_atq_${idx}" class="sw-input" value="${a.ataque}"></div>
+                        <div><span class="sw-label">Dano</span><input type="text" id="arma_dano_${idx}" class="sw-input" value="${a.dano}"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div><span class="sw-label">Crítico</span><input type="text" id="arma_crit_${idx}" class="sw-input" value="${a.critico}"></div>
+                        <div><span class="sw-label">Tipo</span><input type="text" id="arma_tipo_${idx}" class="sw-input" value="${a.tipo}"></div>
+                        <div><span class="sw-label">Notas</span><input type="text" id="arma_notas_${idx}" class="sw-input text-left" value="${a.notas}"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function adicionarArma() {
+            coletarDadosArmas();
+            armasData.push({ arma: "", ataque: "", dano: "", critico: "", tipo: "", notas: "" });
+            renderizarArmas();
+        }
+
+        function removerArma(idx) {
+            coletarDadosArmas();
+            armasData.splice(idx, 1);
+            renderizarArmas();
+        }
+
+        function coletarDadosArmas() {
+            armasData.forEach((_, idx) => {
+                armasData[idx] = {
+                    arma: document.getElementById(`arma_nome_${idx}`)?.value || "",
+                    ataque: document.getElementById(`arma_atq_${idx}`)?.value || "",
+                    dano: document.getElementById(`arma_dano_${idx}`)?.value || "",
+                    critico: document.getElementById(`arma_crit_${idx}`)?.value || "",
+                    tipo: document.getElementById(`arma_tipo_${idx}`)?.value || "",
+                    notas: document.getElementById(`arma_notas_${idx}`)?.value || ""
+                };
+            });
+        }
+
+        function renderizarTalentos() {
+            const container = document.getElementById('talentos-container');
+            container.innerHTML = '';
+            talentosData.forEach((t, idx) => {
+                const div = document.createElement('div');
+                div.className = "flex gap-2 items-center";
+                div.innerHTML = `
+                    <input type="text" id="talento_nome_${idx}" class="sw-input text-left flex-1" placeholder="Nome do Talento" value="${t.nome}">
+                    <div class="flex items-center gap-1 w-20">
+                        <span class="text-[10px] text-gray-400 font-bold">PG</span>
+                        <input type="text" id="talento_pg_${idx}" class="sw-input" value="${t.pg}">
+                    </div>
+                    ${talentosData.length > 1 ? `<button onclick="removerTalento(${idx})" class="text-red-400 hover:text-red-300 text-xs font-bold px-1 cursor-pointer">✕</button>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function adicionarTalento() {
+            coletarDadosTalentos();
+            talentosData.push({ nome: "", pg: "" });
+            renderizarTalentos();
+        }
+
+        function removerTalento(idx) {
+            coletarDadosTalentos();
+            talentosData.splice(idx, 1);
+            renderizarTalentos();
+        }
+
+        function coletarDadosTalentos() {
+            talentosData.forEach((_, idx) => {
+                talentosData[idx] = {
+                    nome: document.getElementById(`talento_nome_${idx}`)?.value || "",
+                    pg: document.getElementById(`talento_pg_${idx}`)?.value || ""
+                };
+            });
+        }
+
+        function renderizarLadoNegro() {
+            const grid = document.getElementById('dark-side-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 24; i++) {
+                const btn = document.createElement('button');
+                btn.className = `dark-side-btn ${i <= condicaoAtual ? 'active' : ''}`;
+                btn.innerText = i;
+                btn.onclick = () => {
+                    condicaoAtual = (condicaoAtual === i) ? i - 1 : i;
+                    renderizarLadoNegro();
+                };
+                grid.appendChild(btn);
+            }
+        }
+
+        function setCondicao(val) {
+            document.querySelectorAll('.condition-box').forEach(el => el.classList.remove('active'));
+            if (val === 0) document.getElementById('cond_0').classList.add('active');
+            if (val === -1) document.getElementById('cond_1').classList.add('active');
+            if (val === -2) document.getElementById('cond_2').classList.add('active');
+            if (val === -5) document.getElementById('cond_3').classList.add('active');
+            if (val === -10) document.getElementById('cond_4').classList.add('active');
+            if (val === 'incapaz') document.getElementById('cond_5').classList.add('active');
+        }
+
+        function salvarFicha() {
+            coletarDadosArmas();
+            coletarDadosTalentos();
+            const dados = {
+                cabecalho: {
+                    nome: document.getElementById('c_nome').value,
+                    jogador: document.getElementById('c_jogador').value,
+                    classe: document.getElementById('c_classe').value,
+                    especie: document.getElementById('c_especie').value,
+                    nivel: document.getElementById('c_nivel').value,
+                    idade: document.getElementById('c_idade').value,
+                    sexo: document.getElementById('c_sexo').value,
+                    peso: document.getElementById('c_peso').value
+                },
+                atributos: {
+                    for: { val: document.getElementById('attr_for').value, mod: document.getElementById('mod_for').value, manual: modsManuais.for },
+                    des: { val: document.getElementById('attr_des').value, mod: document.getElementById('mod_des').value, manual: modsManuais.des },
+                    con: { val: document.getElementById('attr_con').value, mod: document.getElementById('mod_con').value, manual: modsManuais.con },
+                    int: { val: document.getElementById('attr_int').value, mod: document.getElementById('mod_int').value, manual: modsManuais.int },
+                    sab: { val: document.getElementById('attr_sab').value, mod: document.getElementById('mod_sab').value, manual: modsManuais.sab },
+                    car: { val: document.getElementById('attr_car').value, mod: document.getElementById('mod_car').value, manual: modsManuais.car }
+                },
+                status: {
+                    hp_total: document.getElementById('hp_total').value,
+                    hp_restante: document.getElementById('hp_restante').value,
+                    vel: document.getElementById('status_vel').value,
+                    inic: document.getElementById('status_inic').value,
+                    percep: document.getElementById('status_percep').value,
+                    atq_base: document.getElementById('status_atq_base').value,
+                    pts_forca: document.getElementById('status_pts_forca').value,
+                    pts_destino: document.getElementById('status_pts_destino').value,
+                    lado_negro: condicaoAtual
+                },
+                defesas: {
+                    fort_arm: document.getElementById('def_fort_arm').value,
+                    fort_cls: document.getElementById('def_fort_cls').value,
+                    ref_arm: document.getElementById('def_ref_arm').value,
+                    ref_cls: document.getElementById('def_ref_cls').value,
+                    von_arm: document.getElementById('def_von_arm').value,
+                    von_cls: document.getElementById('def_von_cls').value
+                },
+                armas: armasData,
+                pagina2: {
+                    creditos: document.getElementById('p2_creditos').value,
+                    equipamentos: document.getElementById('p2_equipamentos').value,
+                    idiomas: document.getElementById('p2_idiomas').value,
+                    aptidoes: document.getElementById('p2_aptidoes').value,
+                    poderes: document.getElementById('p2_poderes').value,
+                    talentos: talentosData
+                },
+                pericias: listaPericias.map((_, idx) => ({
+                    treinado: document.getElementById(`per_trein_${idx}`).checked,
+                    foco: document.getElementById(`per_foco_${idx}`).checked,
+                    outros: document.getElementById(`per_outros_${idx}`).value
+                }))
+            };
+            localStorage.setItem('star_wars_saga_ficha', JSON.stringify(dados));
+            alert('Ficha salva com sucesso no navegador!');
+        }
+
+        function carregarFicha() {
+            const salvo = localStorage.getItem('star_wars_saga_ficha');
+            if (!salvo) return;
+            try {
+                const dados = JSON.parse(salvo);
+                if (dados.cabecalho) {
+                    document.getElementById('c_nome').value = dados.cabecalho.nome || '';
+                    document.getElementById('c_jogador').value = dados.cabecalho.jogador || '';
+                    document.getElementById('c_classe').value = dados.cabecalho.classe || '';
+                    document.getElementById('c_especie').value = dados.cabecalho.especie || '';
+                    document.getElementById('c_nivel').value = dados.cabecalho.nivel || '1';
+                    document.getElementById('c_idade').value = dados.cabecalho.idade || '';
+                    document.getElementById('c_sexo').value = dados.cabecalho.sexo || '';
+                    document.getElementById('c_peso').value = dados.cabecalho.peso || '';
+                }
+                if (dados.atributos) {
+                    ['for', 'des', 'con', 'int', 'sab', 'car'].forEach(attr => {
+                        if (dados.atributos[attr]) {
+                            document.getElementById(`attr_${attr}`).value = dados.atributos[attr].val;
+                            document.getElementById(`mod_${attr}`).value = dados.atributos[attr].mod;
+                            modsManuais[attr] = dados.atributos[attr].manual || false;
+                        }
+                    });
+                }
+                if (dados.status) {
+                    document.getElementById('hp_total').value = dados.status.hp_total || '20';
+                    document.getElementById('hp_restante').value = dados.status.hp_restante || '20';
+                    document.getElementById('status_vel').value = dados.status.vel || '6m';
+                    document.getElementById('status_inic').value = dados.status.inic || '+0';
+                    document.getElementById('status_percep').value = dados.status.percep || '+0';
+                    document.getElementById('status_atq_base').value = dados.status.atq_base || '+0';
+                    document.getElementById('status_pts_forca').value = dados.status.pts_forca || '1';
+                    document.getElementById('status_pts_destino').value = dados.status.pts_destino || '1';
+                    condicaoAtual = dados.status.lado_negro || 0;
+                }
+                if (dados.defesas) {
+                    document.getElementById('def_fort_arm').value = dados.defesas.fort_arm || '0';
+                    document.getElementById('def_fort_cls').value = dados.defesas.fort_cls || '0';
+                    document.getElementById('def_ref_arm').value = dados.defesas.ref_arm || '0';
+                    document.getElementById('def_ref_cls').value = dados.defesas.ref_cls || '0';
+                    document.getElementById('def_von_arm').value = dados.defesas.von_arm || '0';
+                    document.getElementById('def_von_cls').value = dados.defesas.von_cls || '0';
+                }
+                if (dados.armas) {
+                    armasData = dados.armas;
+                }
+                if (dados.pagina2) {
+                    document.getElementById('p2_creditos').value = dados.pagina2.creditos || '0';
+                    document.getElementById('p2_equipamentos').value = dados.pagina2.equipamentos || '';
+                    document.getElementById('p2_idiomas').value = dados.pagina2.idiomas || '';
+                    document.getElementById('p2_aptidoes').value = dados.pagina2.aptidoes || '';
+                    document.getElementById('p2_poderes').value = dados.pagina2.poderes || '';
+                    if (dados.pagina2.talentos) talentosData = dados.pagina2.talentos;
+                }
+                renderizarArmas();
+                renderizarTalentos();
+                renderizarPericias();
+                if (dados.pericias) {
+                    dados.pericias.forEach((p, idx) => {
+                        const cbTrein = document.getElementById(`per_trein_${idx}`);
+                        const cbFoco = document.getElementById(`per_foco_${idx}`);
+                        const inOutros = document.getElementById(`per_outros_${idx}`);
+                        if (cbTrein) cbTrein.checked = p.treinado;
+                        if (cbFoco) cbFoco.checked = p.foco;
+                        if (inOutros) inOutros.value = p.outros;
+                    });
+                    recalcularPericias();
+                }
+                renderizarLadoNegro();
+            } catch (e) {
+                console.error("Erro ao carregar dados salvos", e);
+            }
+        }
+
+        function exportarJSON() {
+            coletarDadosArmas();
+            coletarDadosTalentos();
+            salvarFicha();
+            const salvo = localStorage.getItem('star_wars_saga_ficha');
+            const blob = new Blob([salvo], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ficha_star_wars_${document.getElementById('c_nome').value || 'personagem'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importarJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    localStorage.setItem('star_wars_saga_ficha', e.target.result);
+                    carregarFicha();
+                    alert('Ficha importada com sucesso!');
+                } catch (err) {
+                    alert('Arquivo JSON inválido.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function limparFicha() {
+            if (confirm('Deseja realmente limpar todos os campos da ficha?')) {
+                localStorage.removeItem('star_wars_saga_ficha');
+                location.reload();
+            }
+        }
+
+        // Inicialização
+        window.onload = function() {
+            renderizarArmas();
+            renderizarTalentos();
+            renderizarPericias();
+            renderizarLadoNegro();
+            carregarFicha();
+        };
+    </script>
+</body>
+</html>
